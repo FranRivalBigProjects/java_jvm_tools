@@ -1,113 +1,944 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Java JVM Tools – GC, Memory & Performance Tuning</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google-site-verification" content="PkLa_ViOo6FAHpvh8SacceMb95o9tePRdrqLNBz9X1M" />
+<meta name="robots" content="index, follow">
 
-  <!-- Google verification -->
-  <meta name="google-site-verification" content="PkLa_ViOo6FAHpvh8SacceMb95o9tePRdrqLNBz9X1M" />
+<title>Java Garbage Collection Tuning Tools – JVM Optimization, GC &amp; Memory Management</title>
 
-  <!-- SEO -->
-  <meta name="description" content="Java JVM tools for analyzing garbage collection, GC logs, JVM memory usage, thread dumps, and tuning performance with optimized JVM flags.">
-  <meta name="keywords" content="java jvm tools, garbage collector analyzer java, gc log parser java, jvm tuning flags, java memory analysis jvm, thread dump analyzer java">
+<meta name="description" content="Java GC tuning tools and JVM optimization reference. Covers garbage collection tuning tools, high performance JVM optimization, Java memory management, G1GC vs ZGC vs Parallel GC comparison, and key JVM flags. Free tools included.">
 
-  <!-- AdSense -->
-  <meta name="google-adsense-account" content="ca-pub-XXXXXXXXXXXXXXXX">
+<meta name="keywords" content="java garbage collection tuning tools, high performance jvm optimization tools, java memory management tools, gc jvm, jvm tuning, java gc tuning, g1gc zgc parallel gc, jvm flags, java heap tuning, jvm performance tools">
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="Java JVM Tools – GC & Memory Optimization">
-  <meta property="og:description" content="Analyze GC logs, memory usage, thread dumps, and optimize JVM performance.">
-  <meta property="og:type" content="website">
+<link rel="canonical" href="https://franrivalbigprojects.github.io/java-jvm-tools/">
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #020617;
-      color: #e2e8f0;
-      margin: 0;
-      padding: 40px;
-    }
-    h1 {
-      color: #22c55e;
-    }
-    p {
-      max-width: 900px;
-      line-height: 1.6;
-    }
-    .tools {
-      margin-top: 30px;
-    }
-    .tool {
-      background: #1e293b;
-      padding: 14px;
-      margin-bottom: 12px;
-      border-radius: 8px;
-      transition: 0.2s;
-    }
-    .tool:hover {
-      background: #334155;
-    }
-    a {
-      color: #22c55e;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+<meta property="og:title" content="Java GC Tuning & JVM Optimization Tools – Complete Reference">
+<meta property="og:description" content="GC tuning tools, JVM optimization flags, G1GC vs ZGC comparison, memory management guide, and Java performance tools. Free reference.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #050a06;
+  --surface: #08110a;
+  --surface2: #0d1810;
+  --border: #122018;
+  --border2: #182e20;
+  --jvm: #22c55e;
+  --jvm-dim: rgba(34,197,94,0.12);
+  --jvm-dim2: rgba(34,197,94,0.05);
+  --jvm-glow: rgba(34,197,94,0.18);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.08);
+  --orange: #fb923c;
+  --orange-dim: rgba(251,146,60,0.08);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.08);
+  --yellow: #fbbf24;
+  --yellow-dim: rgba(251,191,36,0.08);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.08);
+  --text: #b0d4b8;
+  --text-muted: #3a5a48;
+  --text-dim: #0f2018;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Inter', sans-serif;
+  --r: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
+}
+
+header {
+  border-bottom: 1px solid var(--border2);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(5,10,6,0.97);
+  backdrop-filter: blur(12px);
+}
+
+.header-inner {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-pill {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--jvm);
+  background: var(--jvm-dim2);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 3px;
+  padding: 3px 9px;
+}
+
+.logo-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.logo-text strong { color: var(--jvm); font-weight: 500; }
+
+.wrapper {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* HERO */
+.hero {
+  padding: 48px 0 32px;
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 28px;
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--jvm);
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+h1 {
+  font-size: clamp(22px, 3.2vw, 30px);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h1 em { font-style: normal; color: var(--jvm); }
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 640px;
+  line-height: 1.75;
+  margin-bottom: 18px;
+}
+
+.hero-sub strong { color: var(--text); }
+
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.pill-j  { color: var(--jvm); background: var(--jvm-dim2); border-color: rgba(34,197,94,0.3); }
+.pill-dim { color: var(--text-muted); border-color: var(--border2); }
+
+/* GC SELECTOR TOOL */
+.selector-shell {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 18px;
+  box-shadow: 0 0 40px rgba(34,197,94,0.04);
+}
+
+.tool-topbar {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.topbar-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sel-body { padding: 18px 20px; }
+
+.sel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sel-group { display: flex; flex-direction: column; gap: 6px; }
+
+.sel-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.sel-opts { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.sel-btn {
+  padding: 6px 13px;
+  font-family: var(--mono);
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid var(--border2);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+
+.sel-btn:hover { border-color: var(--jvm); color: var(--text); }
+.sel-btn.active { border-color: var(--jvm); background: var(--jvm-dim2); color: var(--jvm); }
+
+.rec-card {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--jvm);
+  border-radius: 0 var(--r) var(--r) 0;
+  padding: 14px 16px;
+  display: none;
+}
+
+.rec-card.show { display: block; }
+
+.rec-gc {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.rec-flags {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--jvm);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.rec-why {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.rec-why strong { color: var(--text); }
+
+/* GC COMPARISON TABLE */
+.gc-table {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.gct-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--border2);
+}
+
+.gct-row:last-child { border-bottom: none; }
+.gct-row.gct-head { background: var(--surface2); }
+
+.gct-cell {
+  padding: 9px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border2);
+}
+
+.gct-cell:last-child { border-right: none; }
+.gct-head .gct-cell { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.b-jvm    { color: var(--jvm);    background: var(--jvm-dim2);  border-color: rgba(34,197,94,0.25); }
+.b-blue   { color: var(--blue);   background: var(--blue-dim);  border-color: rgba(96,165,250,0.25); }
+.b-orange { color: var(--orange); background: var(--orange-dim);border-color: rgba(251,146,60,0.2); }
+.b-yellow { color: var(--yellow); background: var(--yellow-dim);border-color: rgba(251,191,36,0.2); }
+.b-purple { color: var(--purple); background: var(--purple-dim);border-color: rgba(167,139,250,0.2); }
+
+/* JVM FLAGS TABLE */
+.flags-table {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.ft-row {
+  display: grid;
+  grid-template-columns: 300px 80px 1fr;
+  border-bottom: 1px solid var(--border2);
+}
+
+.ft-row:last-child { border-bottom: none; }
+.ft-row.ft-head { background: var(--surface2); }
+.ft-row:hover:not(.ft-head) { background: rgba(34,197,94,0.02); }
+
+.ft-cell {
+  padding: 9px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border2);
+}
+
+.ft-cell:last-child { border-right: none; }
+.ft-head .ft-cell { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.ft-flag { color: var(--jvm); }
+
+/* FILTER ROW */
+.filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border2);
+  background: var(--bg);
+}
+
+.filter-btn {
+  padding: 5px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filter-btn:hover { border-color: var(--jvm); color: var(--text); }
+.filter-btn.active { border-color: var(--jvm); background: var(--jvm-dim2); color: var(--jvm); }
+
+/* TOOLS GRID */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tg-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.tg-card:hover { border-color: rgba(34,197,94,0.3); transform: translateY(-2px); }
+
+.tc-path { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+.tc-name { font-size: 13px; font-weight: 600; color: #fff; }
+.tc-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.tc-cta  { font-family: var(--mono); font-size: 11px; color: var(--jvm); margin-top: 2px; }
+
+/* SECTION */
+hr.divider { border: none; border-top: 1px solid var(--border2); margin: 50px 0; }
+.content-section { margin-bottom: 50px; }
+
+.sec-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.sec-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--jvm);
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+.sec-rule { flex: 1; height: 1px; background: var(--border2); }
+
+p { font-size: 14px; color: var(--text-muted); line-height: 1.8; margin-bottom: 10px; max-width: 820px; }
+p strong { color: var(--text); }
+
+code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface2);
+  color: var(--jvm);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+}
+
+.code-block {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--jvm);
+  border-radius: 5px;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 12px 0;
+  color: var(--text-muted);
+}
+
+.ck { color: var(--jvm); }
+.cs { color: var(--yellow); }
+.cm { color: var(--text-dim); }
+
+.dense-block {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 22px;
+  margin-top: 14px;
+}
+
+.dense-block p { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border2); max-width: none; }
+.dense-block p:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+
+.faq-list {
+  margin-top: 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.faq-item { border-bottom: 1px solid var(--border2); }
+.faq-item:last-child { border-bottom: none; }
+
+.faq-q {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: none;
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  font-family: var(--sans);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s;
+}
+
+.faq-q:hover { background: var(--jvm-dim2); }
+.faq-arrow { font-family: var(--mono); font-size: 11px; color: var(--text-dim); transition: transform 0.2s; flex-shrink: 0; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+.faq-a {
+  display: none;
+  padding: 0 18px 13px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.75;
+  border-top: 1px solid var(--border2);
+  background: var(--bg);
+}
+
+.faq-item.open .faq-a { display: block; }
+.faq-a code { color: var(--jvm); background: var(--jvm-dim2); }
+
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 50px; }
+
+.tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  padding: 4px 12px;
+  cursor: default;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tag:hover { color: var(--jvm); border-color: rgba(34,197,94,0.3); }
+
+footer { border-top: 1px solid var(--border2); padding: 20px 0; position: relative; z-index: 1; }
+
+.footer-inner {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+footer p { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin: 0; }
+
+@media (max-width: 680px) {
+  .sel-grid { grid-template-columns: 1fr; }
+  .gct-row  { grid-template-columns: 90px 1fr 1fr; font-size: 10px; }
+  .gct-row .gct-cell:nth-child(4),
+  .gct-row .gct-cell:nth-child(5) { display: none; }
+  .ft-row   { grid-template-columns: 200px 60px 1fr; font-size: 10px; }
+}
+</style>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Java Garbage Collection Tuning Tools – JVM Optimization Reference","description":"Complete reference for Java garbage collection tuning tools, high performance JVM optimization, Java memory management, GC types comparison (G1GC, ZGC, Parallel GC), and key JVM flags. Interactive GC selector and JVM flags reference.","keywords":"java garbage collection tuning tools, high performance jvm optimization tools, java memory management tools, gc jvm, jvm tuning flags"}
+</script>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What are the best Java garbage collection tuning tools?","acceptedAnswer":{"@type":"Answer","text":"Top Java GC tuning tools: GCEasy.io (upload GC log for visual analysis), JVM Garbage Collector Logs with -Xlog:gc flags (built-in), VisualVM (free, ships with JDK, shows GC activity graphically), JProfiler (commercial, deep GC profiling), Eclipse MAT (Memory Analyzer Tool for heap dumps), Datadog APM (production GC monitoring). For JVM flags optimization: use -XX:+PrintGCDetails -Xlog:gc* to generate logs, then analyze with GCEasy or VisualVM."}},{"@type":"Question","name":"Which Java GC is best for high performance JVM applications?","acceptedAnswer":{"@type":"Answer","text":"Depends on requirements: ZGC (Java 15+ recommended) for sub-millisecond pause times in latency-sensitive applications — handles terabyte heaps with pauses typically under 1ms. G1GC (default since Java 9) for balanced throughput and latency — good for heaps 4GB-32GB. Parallel GC for maximum throughput in batch processing where pause times matter less. Shenandoah (Red Hat) for similar use case to ZGC. For high performance JVM optimization: ZGC + -XX:MaxGCPauseMillis=1 is the standard choice for real-time systems in 2025."}},{"@type":"Question","name":"What JVM flags improve Java memory management performance?","acceptedAnswer":{"@type":"Answer","text":"Key JVM flags for performance: -Xms and -Xmx (set equal to avoid resize pauses), -XX:+UseZGC or -XX:+UseG1GC, -XX:MaxGCPauseMillis=200, -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp, -Xlog:gc*:file=gc.log:time:filecount=5 (GC logging), -XX:+UseStringDeduplication (G1GC only, reduces string memory), -XX:+DisableExplicitGC (prevents System.gc() calls). Always set Xms=Xmx in production to prevent heap resizing which causes GC pauses."}}]}
+</script>
+
 </head>
+
 <body>
+<header>
+  <div class="header-inner">
+    <span class="logo-pill">JVM</span>
+    <span class="logo-text"><strong>java-jvm</strong>-tools</span>
+  </div>
+</header>
 
-  <h1>Java JVM Tools</h1>
+<div class="wrapper">
 
-  <p>
-    A collection of tools for analyzing and optimizing the Java Virtual Machine (JVM).
-    Monitor garbage collection behavior, parse GC logs, visualize memory usage,
-    and tune JVM performance with advanced configuration flags.
-  </p>
+  <!-- HERO -->
 
-  <p>
-    These tools are designed for performance engineers and backend developers
-    working on high-load Java applications and production systems.
-  </p>
+  <section class="hero">
+    <p class="hero-eyebrow">// Java Performance Engineering</p>
+    <h1><em>Java GC Tuning</em> &amp; JVM Optimization Tools<br>Memory Management Reference</h1>
+    <p class="hero-sub">
+      <strong>Garbage collection tuning tools</strong>, GC selector, JVM flags reference, memory management guide, and G1GC vs ZGC vs Parallel GC comparison for high-performance Java applications.
+    </p>
+    <div class="pill-row">
+      <span class="pill pill-j">G1GC</span>
+      <span class="pill pill-j">ZGC</span>
+      <span class="pill pill-j">Shenandoah</span>
+      <span class="pill pill-dim">Heap Tuning</span>
+      <span class="pill pill-dim">GC Logs</span>
+      <span class="pill pill-dim">Memory Tools</span>
+    </div>
+  </section>
 
-  <div class="tools">
+  <!-- GC SELECTOR TOOL -->
 
-    <div class="tool"><a href="./java_garbage_collector_analyzer/">Garbage Collector Analyzer</a></div>
-    <div class="tool"><a href="./java_gc_log_parser/">GC Log Parser</a></div>
-    <div class="tool"><a href="./java_jvm_flags_optimizer/">JVM Flags Optimizer</a></div>
-    <div class="tool"><a href="./java_jvm_memory_visualizer/">JVM Memory Visualizer</a></div>
-    <div class="tool"><a href="./java_jvm_tuning_simulator/">JVM Tuning Simulator</a></div>
-    <div class="tool"><a href="./java_thread_dump_analyzer/">Thread Dump Analyzer</a></div>
-
+  <div class="selector-shell">
+    <div class="tool-topbar">
+      <span class="topbar-label">// GC Selector — Find the right garbage collector</span>
+    </div>
+    <div class="sel-body">
+      <div class="sel-grid">
+        <div class="sel-group">
+          <span class="sel-label">Primary requirement</span>
+          <div class="sel-opts">
+            <button class="sel-btn" data-q="req" data-v="latency" onclick="setAnswer(this,'req','latency')">Low latency</button>
+            <button class="sel-btn" data-q="req" data-v="throughput" onclick="setAnswer(this,'req','throughput')">Max throughput</button>
+            <button class="sel-btn" data-q="req" data-v="balanced" onclick="setAnswer(this,'req','balanced')">Balanced</button>
+          </div>
+        </div>
+        <div class="sel-group">
+          <span class="sel-label">Heap size</span>
+          <div class="sel-opts">
+            <button class="sel-btn" data-q="heap" data-v="small" onclick="setAnswer(this,'heap','small')">Under 2GB</button>
+            <button class="sel-btn" data-q="heap" data-v="medium" onclick="setAnswer(this,'heap','medium')">2GB – 32GB</button>
+            <button class="sel-btn" data-q="heap" data-v="large" onclick="setAnswer(this,'heap','large')">Over 32GB</button>
+          </div>
+        </div>
+      </div>
+      <div class="rec-card" id="gcRec">
+        <div class="rec-gc" id="gcRecName"></div>
+        <div class="rec-flags" id="gcRecFlags"></div>
+        <div class="rec-why" id="gcRecWhy"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- SEO LONG TAIL -->
-  <h2>Common JVM & Performance Queries</h2>
+  <!-- GC COMPARISON -->
 
-  <ul>
-    <li>how to analyze gc logs in java step by step</li>
-    <li>java garbage collection tuning best practices</li>
-    <li>jvm memory leak detection using heap and gc logs</li>
-    <li>best jvm flags for high performance applications</li>
-    <li>how to read thread dump java example</li>
-    <li>optimize jvm for low latency systems</li>
-    <li>g1 vs zgc vs parallel gc comparison java</li>
-  </ul>
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">GC comparison — G1GC vs ZGC vs Parallel vs Shenandoah</span>
+      <span class="sec-rule"></span>
+    </div>
+    <div class="gc-table">
+      <div class="gct-row gct-head">
+        <div class="gct-cell">GC</div>
+        <div class="gct-cell">Pause type</div>
+        <div class="gct-cell">Best for</div>
+        <div class="gct-cell">Java version</div>
+        <div class="gct-cell">Flag</div>
+      </div>
+      <div class="gct-row">
+        <div class="gct-cell" style="color:#fff;font-weight:600;">G1GC</div>
+        <div class="gct-cell"><span class="badge b-blue">Concurrent + STW</span></div>
+        <div class="gct-cell">Balanced latency/throughput, 4–32GB heap</div>
+        <div class="gct-cell"><span class="badge b-jvm">Java 9+ default</span></div>
+        <div class="gct-cell" style="color:var(--jvm);">-XX:+UseG1GC</div>
+      </div>
+      <div class="gct-row">
+        <div class="gct-cell" style="color:#fff;font-weight:600;">ZGC</div>
+        <div class="gct-cell"><span class="badge b-jvm">Sub-millisecond</span></div>
+        <div class="gct-cell">Ultra-low latency, 1MB–16TB heap</div>
+        <div class="gct-cell"><span class="badge b-blue">Java 15+ prod</span></div>
+        <div class="gct-cell" style="color:var(--jvm);">-XX:+UseZGC</div>
+      </div>
+      <div class="gct-row">
+        <div class="gct-cell" style="color:#fff;font-weight:600;">Shenandoah</div>
+        <div class="gct-cell"><span class="badge b-jvm">Sub-millisecond</span></div>
+        <div class="gct-cell">Ultra-low latency (Red Hat JDK / OpenJDK)</div>
+        <div class="gct-cell"><span class="badge b-yellow">Java 12+</span></div>
+        <div class="gct-cell" style="color:var(--jvm);">-XX:+UseShenandoahGC</div>
+      </div>
+      <div class="gct-row">
+        <div class="gct-cell" style="color:#fff;font-weight:600;">Parallel GC</div>
+        <div class="gct-cell"><span class="badge b-orange">STW pauses</span></div>
+        <div class="gct-cell">Max throughput, batch processing, small heap</div>
+        <div class="gct-cell"><span class="badge b-yellow">All versions</span></div>
+        <div class="gct-cell" style="color:var(--jvm);">-XX:+UseParallelGC</div>
+      </div>
+      <div class="gct-row">
+        <div class="gct-cell" style="color:#fff;font-weight:600;">Serial GC</div>
+        <div class="gct-cell"><span class="badge b-orange">STW pauses</span></div>
+        <div class="gct-cell">Single-threaded, small apps, embedded</div>
+        <div class="gct-cell"><span class="badge b-yellow">All versions</span></div>
+        <div class="gct-cell" style="color:var(--jvm);">-XX:+UseSerialGC</div>
+      </div>
+    </div>
+  </section>
 
-  <p>
-    These tools help improve performance, reduce latency, and ensure stability
-    in enterprise-grade Java systems.
-  </p>
+  <!-- JVM FLAGS TABLE -->
 
-  <!-- snippet SEO -->
-  <pre>
--XX:+UseG1GC
--XX:MaxGCPauseMillis=200
--XX:+HeapDumpOnOutOfMemoryError
-  </pre>
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">JVM flags reference</span>
+      <span class="sec-rule"></span>
+    </div>
+    <div class="selector-shell">
+      <div class="filter-row" id="flagFilterRow">
+        <button class="filter-btn active" onclick="filterFlags('all',this)">All</button>
+        <button class="filter-btn" onclick="filterFlags('heap',this)">Heap</button>
+        <button class="filter-btn" onclick="filterFlags('gc',this)">GC</button>
+        <button class="filter-btn" onclick="filterFlags('logging',this)">Logging</button>
+        <button class="filter-btn" onclick="filterFlags('memory',this)">Memory</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;min-width:580px;border-collapse:collapse;" id="flagsTable">
+          <thead>
+            <tr>
+              <th style="background:var(--surface2);padding:9px 12px;font-family:var(--mono);font-size:10px;text-align:left;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);width:300px;">Flag</th>
+              <th style="background:var(--surface2);padding:9px 12px;font-family:var(--mono);font-size:10px;text-align:left;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);width:80px;">Category</th>
+              <th style="background:var(--surface2);padding:9px 12px;font-family:var(--mono);font-size:10px;text-align:left;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border2);">Description</th>
+            </tr>
+          </thead>
+          <tbody id="flagsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- MEMORY MANAGEMENT GUIDE -->
+
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">Java memory management guide</span>
+      <span class="sec-rule"></span>
+    </div>
+    <p>Java memory management is handled by the JVM's automatic garbage collector, but tuning it correctly can reduce pause times by orders of magnitude.</p>
+
+
+<div class="code-block"><span class="cm"># Enable GC logging (Java 11+) — essential for tuning</span>
+
+
+<span class="ck">java</span> <span class="cs">-Xms4g -Xmx4g</span>   
+<span class="cs">-XX:+UseG1GC</span>   
+<span class="cs">-XX:MaxGCPauseMillis=200</span>   
+<span class="cs">-Xlog:gc*:file=gc.log:time,uptime:filecount=5,filesize=20m</span>   
+<span class="cs">-XX:+HeapDumpOnOutOfMemoryError</span>   
+<span class="cs">-XX:HeapDumpPath=/var/dumps/</span>   
+-jar myapp.jar
+
+<span class="cm"># ZGC for ultra-low latency (Java 15+)</span>
+<span class="ck">java</span> <span class="cs">-Xms16g -Xmx16g</span>   
+<span class="cs">-XX:+UseZGC</span>   
+<span class="cs">-XX:MaxGCPauseMillis=1</span>   
+<span class="cs">-Xlog:gc*:file=gc.log:time</span>   
+-jar myapp.jar</div>
+
+
+<div class="dense-block">
+  <p><strong>Always set -Xms equal to -Xmx in production</strong><br>
+  When -Xms (initial heap) is smaller than -Xmx (max heap), the JVM performs expensive heap resize operations as load increases. These resizes trigger full GC pauses. In production, always set <code>-Xms4g -Xmx4g</code> (same value) to give the JVM full memory from startup. The trade-off: your process reserves all memory immediately even when idle. For Kubernetes: set JVM max heap to ~75% of container memory limit to leave room for metaspace, thread stacks, and off-heap buffers.</p>
+  <p><strong>Reading GC logs for java garbage collection tuning</strong><br>
+  Enable logs with <code>-Xlog:gc*:file=gc.log:time</code>. Key patterns to look for: frequent minor GC (Eden too small — increase -XX:NewRatio or -XX:NewSize), major/full GC events (heap sizing issue or memory leak), long STW pauses (consider ZGC or Shenandoah), and rapid growth in old generation (memory leak — analyze heap dump with Eclipse MAT). Upload gc.log to GCEasy.io for visual analysis.</p>
+  <p><strong>Java memory management tools for production</strong><br>
+  Built-in (free): <code>jstat -gcutil</code> for live GC stats, <code>jmap -heap</code> for heap summary, <code>jcmd</code> for diagnostic commands, VisualVM for GUI monitoring. Third-party: Eclipse MAT for heap dump analysis (identifying memory leaks), JProfiler for CPU + memory profiling, YourKit for production-safe profiling. Cloud APM: Datadog, New Relic, Elastic APM for continuous production GC monitoring with alerting.</p>
+</div>
+
+
+  </section>
+
+  <!-- JVM TOOLS -->
+
+  <section class="content-section">
+    <div class="sec-head">
+      <span class="sec-label">JVM analysis tools</span>
+      <span class="sec-rule"></span>
+    </div>
+    <div class="tools-grid">
+      <a class="tg-card" href="java_garbage_collector_analyzer/">
+        <span class="tc-path">gc-analyzer/</span>
+        <span class="tc-name">GC Analyzer</span>
+        <span class="tc-desc">Analyze garbage collector behavior and tuning options.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tg-card" href="java_gc_log_parser/">
+        <span class="tc-path">gc-log-parser/</span>
+        <span class="tc-name">GC Log Parser</span>
+        <span class="tc-desc">Parse and visualize Java GC log output.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tg-card" href="java_jvm_flags_optimizer/">
+        <span class="tc-path">jvm-flags/</span>
+        <span class="tc-name">JVM Flags Optimizer</span>
+        <span class="tc-desc">Generate optimized JVM flags for your workload.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tg-card" href="java_jvm_memory_visualizer/">
+        <span class="tc-path">memory-viz/</span>
+        <span class="tc-name">JVM Memory Visualizer</span>
+        <span class="tc-desc">Visualize heap, metaspace, and off-heap usage.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tg-card" href="java_jvm_tuning_simulator/">
+        <span class="tc-path">tuning-sim/</span>
+        <span class="tc-name">JVM Tuning Simulator</span>
+        <span class="tc-desc">Simulate JVM performance with different flag configurations.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+      <a class="tg-card" href="java_thread_dump_analyzer/">
+        <span class="tc-path">thread-dump/</span>
+        <span class="tc-name">Thread Dump Analyzer</span>
+        <span class="tc-desc">Analyze Java thread dumps for deadlocks and contention.</span>
+        <span class="tc-cta">Open &rarr;</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+
+  <div class="sec-head">
+    <span class="sec-label">Frequently Asked Questions</span>
+    <span class="sec-rule"></span>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What are the best Java garbage collection tuning tools?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">Top GC tuning tools: <strong>GCEasy.io</strong> — upload GC log for visual timeline analysis (free tier). <strong>VisualVM</strong> — free JDK tool, shows live GC activity, heap usage, CPU. <strong>jstat</strong> — built-in CLI: <code>jstat -gcutil &lt;pid&gt; 1000</code> prints GC stats every second. <strong>JProfiler</strong> — commercial, deep GC and allocation profiling. <strong>Eclipse MAT</strong> — heap dump analysis for memory leak detection. <strong>Datadog APM / New Relic</strong> — production continuous GC monitoring.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How do I tune Java garbage collection for high performance?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">Step-by-step GC tuning: (1) Enable GC logging: <code>-Xlog:gc*:file=gc.log:time</code>. (2) Run under production load and collect logs. (3) Analyze with GCEasy or VisualVM — identify pause patterns. (4) Set <code>-Xms</code> = <code>-Xmx</code> to prevent resize pauses. (5) Choose GC: ZGC for latency, Parallel GC for throughput, G1GC for balance. (6) Set <code>-XX:MaxGCPauseMillis</code> target. (7) Tune generation sizes if using G1GC: <code>-XX:NewRatio</code>. (8) Re-test and iterate.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is G1GC vs ZGC — which should I use?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a"><strong>G1GC</strong> (default Java 9+): Concurrent mark-sweep with short STW pauses. Good for heaps 4GB–32GB. Predictable pause targets via <code>-XX:MaxGCPauseMillis</code>. Works everywhere. <strong>ZGC</strong> (Java 15+ production-ready): Near-zero pause times (&lt;1ms typical) regardless of heap size — handles terabytes. Better for latency-sensitive services. Use ZGC for real-time APIs, trading systems, or any service where GC pause spikes cause SLA violations. Use G1GC for general-purpose backend applications where 200ms pauses are acceptable.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is gc jvm — Java garbage collection explained?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">JVM GC (Garbage Collection) automatically reclaims memory occupied by objects no longer referenced. The JVM heap is divided into generations: <strong>Young generation</strong> (Eden + Survivor spaces) for new short-lived objects — collected frequently with minor GCs. <strong>Old generation</strong> (tenured) for long-lived objects — collected less frequently with major GCs. <strong>Metaspace</strong> (Java 8+) for class metadata. GC pauses stop application threads ("Stop-The-World") to maintain heap consistency. Modern GCs (ZGC, Shenandoah) do most work concurrently to minimize these pauses.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What Java memory management tools detect memory leaks?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">Memory leak detection tools: (1) <strong>Eclipse MAT</strong> — analyzes heap dumps (<code>-XX:+HeapDumpOnOutOfMemoryError</code>), shows dominator tree and leak suspects. (2) <strong>VisualVM</strong> — heap dump + sampler. (3) <strong>JProfiler</strong> — allocation tracking, reference graphs. (4) <strong>jmap</strong> CLI: <code>jmap -dump:format=b,file=heap.hprof &lt;pid&gt;</code>. Signs of a memory leak: old generation grows continuously, full GC runs more frequently but can't reclaim space, OutOfMemoryError: Java heap space after long run.</div>
+    </div>
+  </div>
+
+  <div class="tag-cloud" style="margin-top:32px;">
+    <span class="tag">java garbage collection tuning tools</span>
+    <span class="tag">high performance jvm optimization tools</span>
+    <span class="tag">java memory management tools</span>
+    <span class="tag">gc jvm</span>
+    <span class="tag">g1gc vs zgc</span>
+    <span class="tag">jvm tuning flags</span>
+    <span class="tag">java heap tuning</span>
+    <span class="tag">gc log parser java</span>
+    <span class="tag">jvm performance tools</span>
+    <span class="tag">java jvm tools</span>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <p>java-jvm-tools &middot; gc tuning &middot; jvm optimization &middot; memory management</p>
+    <p>g1gc &middot; zgc &middot; shenandoah &middot; jvm flags &middot; github pages</p>
+  </div>
+</footer>
+
+<script>
+// ─── GC SELECTOR ───
+var GC_RECS = {
+  'latency_small':    { gc: 'ZGC', color: 'var(--jvm)',    flags: '-Xms512m -Xmx512m\n-XX:+UseZGC\n-XX:MaxGCPauseMillis=1\n-Xlog:gc*:file=gc.log:time', why: '<strong>ZGC</strong> handles small heaps with sub-millisecond pauses. Even though your heap is small, ZGC adds minimal overhead and provides consistent low-latency behavior.' },
+  'latency_medium':   { gc: 'ZGC', color: 'var(--jvm)',    flags: '-Xms8g -Xmx8g\n-XX:+UseZGC\n-XX:MaxGCPauseMillis=1\n-Xlog:gc*:file=gc.log:time', why: '<strong>ZGC</strong> is the clear winner for latency-sensitive applications with medium heaps. Typical pauses under 1ms regardless of live set size. Production-ready since Java 15.' },
+  'latency_large':    { gc: 'ZGC', color: 'var(--jvm)',    flags: '-Xms64g -Xmx64g\n-XX:+UseZGC\n-XX:ConcGCThreads=8\n-XX:MaxGCPauseMillis=1\n-Xlog:gc*:file=gc.log:time', why: '<strong>ZGC</strong> is uniquely suited for large heaps — it was designed to handle terabyte-scale heaps with sub-millisecond pauses. G1GC at this scale would have much longer pauses.' },
+  'throughput_small': { gc: 'Parallel GC', color: 'var(--orange)', flags: '-Xms512m -Xmx512m\n-XX:+UseParallelGC\n-XX:ParallelGCThreads=4\n-Xlog:gc*:file=gc.log:time', why: '<strong>Parallel GC</strong> maximizes throughput for batch jobs and small heaps. STW pauses are acceptable if you need maximum processing speed, not low latency.' },
+  'throughput_medium':{ gc: 'Parallel GC', color: 'var(--orange)', flags: '-Xms8g -Xmx8g\n-XX:+UseParallelGC\n-XX:ParallelGCThreads=8\n-Xlog:gc*:file=gc.log:time', why: '<strong>Parallel GC</strong> uses multiple threads for collection and minimizes GC overhead for throughput. Ideal for data processing, batch ETL, and jobs where pause time is acceptable.' },
+  'throughput_large': { gc: 'G1GC', color: 'var(--blue)',  flags: '-Xms64g -Xmx64g\n-XX:+UseG1GC\n-XX:MaxGCPauseMillis=500\n-XX:G1HeapRegionSize=32m\n-Xlog:gc*:file=gc.log:time', why: 'For large heaps with throughput priority, <strong>G1GC</strong> is safer than Parallel GC which can have very long major GC pauses at this scale. Set a higher pause target to allow more throughput.' },
+  'balanced_small':   { gc: 'G1GC', color: 'var(--blue)',  flags: '-Xms512m -Xmx512m\n-XX:+UseG1GC\n-XX:MaxGCPauseMillis=200\n-Xlog:gc*:file=gc.log:time', why: '<strong>G1GC</strong> is the JVM default since Java 9 and an excellent balanced choice. Good latency with reasonable throughput for most web services and APIs with small heaps.' },
+  'balanced_medium':  { gc: 'G1GC', color: 'var(--blue)',  flags: '-Xms8g -Xmx8g\n-XX:+UseG1GC\n-XX:MaxGCPauseMillis=200\n-XX:+UseStringDeduplication\n-Xlog:gc*:file=gc.log:time', why: '<strong>G1GC</strong> is the optimal choice for balanced workloads in the 2–32GB range. StringDeduplication reduces memory usage in applications with many duplicate strings.' },
+  'balanced_large':   { gc: 'ZGC', color: 'var(--jvm)',    flags: '-Xms64g -Xmx64g\n-XX:+UseZGC\n-XX:MaxGCPauseMillis=5\n-XX:ConcGCThreads=6\n-Xlog:gc*:file=gc.log:time', why: 'For large heaps with balanced requirements, <strong>ZGC</strong> is recommended over G1GC — G1GC can have increasingly long pauses as heap grows beyond 32GB. ZGC keeps pauses short regardless of heap size.' }
+};
+
+var answers = {};
+
+function setAnswer(btn, q, v) {
+  answers[q] = v;
+  document.querySelectorAll('.sel-btn[data-q="' + q + '"]').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  updateRec();
+}
+
+function updateRec() {
+  if (!answers.req || !answers.heap) return;
+  var key = answers.req + '_' + answers.heap;
+  var rec = GC_RECS[key];
+  if (!rec) return;
+  var card = document.getElementById('gcRec');
+  var nameEl = document.getElementById('gcRecName');
+  var flagsEl = document.getElementById('gcRecFlags');
+  var whyEl = document.getElementById('gcRecWhy');
+  nameEl.textContent = '\u25B6 Recommended: ' + rec.gc;
+  nameEl.style.color = rec.color;
+  flagsEl.textContent = rec.flags;
+  card.style.borderLeftColor = rec.color;
+  whyEl.innerHTML = rec.why;
+  card.classList.add('show');
+}
+
+// ─── FLAGS DATA ───
+var FLAGS_DATA = [
+  { cat: 'heap',    flag: '-Xms<size>',               impact: 'Critical', desc: 'Initial heap size. Set equal to -Xmx in production to prevent resize pauses.' },
+  { cat: 'heap',    flag: '-Xmx<size>',               impact: 'Critical', desc: 'Maximum heap size. Rule: ~75% of container/pod memory limit.' },
+  { cat: 'heap',    flag: '-XX:NewRatio=2',            impact: 'High',     desc: 'Ratio of old to young generation (default 2 = 1/3 young). Increase for long-lived object workloads.' },
+  { cat: 'heap',    flag: '-XX:SurvivorRatio=8',       impact: 'Medium',   desc: 'Eden-to-Survivor ratio. Increase if objects are promoted too early to old gen.' },
+  { cat: 'gc',      flag: '-XX:+UseG1GC',              impact: 'Critical', desc: 'Use G1 Garbage Collector. Default since Java 9. Good for 4–32GB heaps.' },
+  { cat: 'gc',      flag: '-XX:+UseZGC',               impact: 'Critical', desc: 'Use Z Garbage Collector. Sub-millisecond pauses. Production-ready Java 15+.' },
+  { cat: 'gc',      flag: '-XX:+UseParallelGC',        impact: 'Critical', desc: 'Use Parallel GC for maximum throughput. Best for batch processing.' },
+  { cat: 'gc',      flag: '-XX:+UseShenandoahGC',      impact: 'Critical', desc: 'Use Shenandoah GC (OpenJDK/Red Hat). Sub-ms pauses, competes with ZGC.' },
+  { cat: 'gc',      flag: '-XX:MaxGCPauseMillis=200',  impact: 'High',     desc: 'Target maximum GC pause in ms (G1GC/ZGC). Set lower for latency, higher for throughput.' },
+  { cat: 'gc',      flag: '-XX:+UseStringDeduplication', impact: 'Medium', desc: 'G1GC: deduplicate String objects in heap. Reduces heap by 10–25% in typical apps.' },
+  { cat: 'gc',      flag: '-XX:+DisableExplicitGC',    impact: 'Medium',   desc: 'Prevents System.gc() from triggering full GC. Add if your app or libraries call System.gc().' },
+  { cat: 'logging', flag: '-Xlog:gc*:file=gc.log:time',impact: 'Critical', desc: 'Enable GC logging to file (Java 11+). Essential for GC tuning analysis.' },
+  { cat: 'logging', flag: '-Xlog:gc*:file=gc.log:time:filecount=5,filesize=20m', impact: 'High', desc: 'GC log rotation: 5 files, 20MB each. Prevents disk exhaustion in production.' },
+  { cat: 'memory',  flag: '-XX:+HeapDumpOnOutOfMemoryError', impact: 'Critical', desc: 'Write heap dump when OOM occurs. Always enable in production.' },
+  { cat: 'memory',  flag: '-XX:HeapDumpPath=/tmp/',    impact: 'High',     desc: 'Directory for heap dumps. Ensure writable and has sufficient disk space.' },
+  { cat: 'memory',  flag: '-XX:MetaspaceSize=256m',    impact: 'Medium',   desc: 'Initial metaspace size. Prevents repeated metaspace GC on startup.' },
+  { cat: 'memory',  flag: '-XX:MaxMetaspaceSize=512m', impact: 'Medium',   desc: 'Maximum metaspace. Prevents unbounded growth in apps loading many classes.' }
+];
+
+var impactColors = { Critical: 'b-jvm', High: 'b-blue', Medium: 'b-yellow' };
+
+function renderFlags(cat) {
+  var tbody = document.getElementById('flagsBody');
+  tbody.innerHTML = '';
+  var filtered = cat === 'all' ? FLAGS_DATA : FLAGS_DATA.filter(function(f) { return f.cat === cat; });
+  filtered.forEach(function(f) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--jvm);border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);">' + f.flag + '</td>' +
+      '<td style="padding:9px 12px;font-family:var(--mono);font-size:11px;border-bottom:1px solid var(--border2);border-right:1px solid var(--border2);"><span class="badge ' + (impactColors[f.impact] || 'b-yellow') + '">' + f.impact + '</span></td>' +
+      '<td style="padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border2);">' + f.desc + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function filterFlags(cat, btn) {
+  document.querySelectorAll('#flagFilterRow .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderFlags(cat);
+}
+
+function toggleFaq(btn) {
+  btn.parentElement.classList.toggle('open');
+}
+
+renderFlags('all');
+</script>
 
 </body>
 </html>
